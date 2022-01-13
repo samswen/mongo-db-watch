@@ -5,10 +5,10 @@ const Mongodb = require('@samwen/mongodb');
 
 class MyDbWatch extends DbWatch {
     async process_event(db_name, db_cname, event) {
-        console.log({db_name, db_cname});
-        const signature = {db_name, db_cname, _id: event._id, action: event.operationType, ...event.updateDescription};
+        const { _id, action, update, remove } = event;
+        const signature = {db_name, db_cname, _id, action, update, remove};
         console.log(signature);
-        console.log(event.fullDocument);
+        console.log(event.document);
     }
 }
 

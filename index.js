@@ -116,7 +116,8 @@ class DbWatch {
             const change_event = await cursor.next();
             resume_token = change_event._id;
             const {operationType, fullDocument, documentKey, updateDescription} = change_event;
-            const event = {_id: documentKey._id, operationType, fullDocument, updateDescription};
+            const { updatedFields = null, removedFields = null  } = updateDescription ? updateDescription : {};
+            const event = {_id: documentKey._id, action: operationType, update: updatedFields, remove: removedFields, document: fullDocument};
             this.event_queue.push({db_name, db_cname, event});
             resume_token_util.save(data_dir, db_name, db_cname, resume_token);
         }
