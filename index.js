@@ -26,7 +26,7 @@ class DbWatch {
         this.event_queue = [];
     }
 
-    set_watch(db_handle, db_name, db_cname, projection, actions_filter, full_document = 'updateLookup') {
+    set_watch(db_handle, db_name, db_cname, projection, actions_filter, full_document) {
         if (!db_handle || !db_name || !db_cname) {
             throw new Error('missing required db_handle, db_name and/or db_cname');
         }
@@ -34,6 +34,8 @@ class DbWatch {
             console.error('the same watch settings already existed');
             return false;
         }
+        if (actions_filter === undefined) actions_filter = this.config.actions_filter;
+        if (full_document === undefined) full_document = this.config.full_document;
         const change_stream = { db_handle, db_name, db_cname, projection, actions_filter, full_document, stopped: false };
         this.change_streams.push(change_stream);
         this.process_stream(change_stream);
