@@ -1,0 +1,29 @@
+{
+  "name": "@samwen/mongo-db-watch",
+  "version": "1.0.0",
+  "description": "watch mongo db collection changes",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/samswen/mongo-db-watch.git"
+  },
+  "keywords": [
+    "cdc",
+    "change",
+    "data",
+    "capture",
+    "monodb",
+    "collection",
+    "change",
+    "streams"
+  ],
+  "author": "Sam Wen",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/samswen/mongo-db-watch/issues"
+  },
+  "homepage": "https://github.com/samswen/mongo-db-watch#readme"
+}
