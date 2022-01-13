@@ -1,6 +1,6 @@
 {
   "name": "@samwen/mongo-db-watch",
-  "version": "1.0.3",
+  "version": "1.0.6",
   "description": "watch mongo db collection changes",
   "main": "index.js",
   "scripts": {

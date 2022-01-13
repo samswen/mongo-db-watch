@@ -53,15 +53,22 @@ class DbWatch {
                 }
             }
             const promises = [];
+            let events = [];
             while(this.event_queue.length > 0) {
-                const queue_item = this.event_queue.shift();
-                if (!queue_item) break;
-                const {db_name, db_cname, event} = queue_item;
-                promises.push(this.process_event(db_name, db_cname, event));
-                if (promises.length === this.config.batch_size) {
-                    await Promise.all(promises);
-                    promises.length = 0;
+                const event = this.event_queue.shift();
+                if (!event) break;
+                events.push(event);
+                if (events.length === this.config.max_events) {
+                    promises.push(this.process_events(events));
+                    events = [];
+                    if (promises.length === this.config.max_promises) {
+                        await Promise.all(promises);
+                        promises.length = 0;;
+                    }
                 }
+            }
+            if (events.length > 0) {
+                promises.push(this.process_events(events));
             }
             if (promises.length > 0) {
                 await Promise.all(promises);
@@ -117,15 +124,15 @@ class DbWatch {
             resume_token = change_event._id;
             const {operationType, fullDocument, documentKey, updateDescription} = change_event;
             const { updatedFields = null, removedFields = null  } = updateDescription ? updateDescription : {};
-            const event = {_id: documentKey._id, action: operationType, update: updatedFields, remove: removedFields, document: fullDocument};
-            this.event_queue.push({db_name, db_cname, event});
+            const event = {db_name, db_cname, _id: documentKey._id, action: operationType, update: updatedFields, remove: removedFields, document: fullDocument};
+            this.event_queue.push(event);
             resume_token_util.save(data_dir, db_name, db_cname, resume_token);
         }
         await cursor.close();
     }
 
-    async process_event(db_name, db_cname, event) {
-        console.log(db_name, db_cname, event);
+    async process_events(events) {
+        console.log(events);
     }
 
     stop() {
