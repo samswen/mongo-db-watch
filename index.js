@@ -26,7 +26,7 @@ class DbWatch {
         this.event_queue = [];
     }
 
-    set_watch(db_handle, db_name, db_cname, projection, actions_filter, full_document) {
+    set_watch(db_handle, db_name, db_cname, document_projection, match, full_document) {
         if (!db_handle || !db_name || !db_cname) {
             throw new Error('missing required db_handle, db_name and/or db_cname');
         }
@@ -34,9 +34,8 @@ class DbWatch {
             console.error('the same watch settings already existed');
             return false;
         }
-        if (actions_filter === undefined) actions_filter = this.config.actions_filter;
         if (full_document === undefined) full_document = this.config.full_document;
-        const change_stream = { db_handle, db_name, db_cname, projection, actions_filter, full_document, stopped: false };
+        const change_stream = { db_handle, db_name, db_cname, document_projection, match, full_document, stopped: false };
         this.change_streams.push(change_stream);
         this.process_stream(change_stream);
         return true;
@@ -93,15 +92,16 @@ class DbWatch {
     }
 
     async run_stream(change_stream) {
-        const { db_handle, db_name, db_cname, projection, actions_filter, full_document } = change_stream;
+        const { db_handle, db_name, db_cname, document_projection, match, full_document } = change_stream;
         console.log('mongo start', db_name, db_cname);
         const pipeline = [];
-        if (projection && Object.keys(projection).length > 0) {
-            pipeline.push({$project: projection})
+        if (match && Object.keys(match).length > 0) {
+            pipeline.push({ $match: match });
         }
-        if (actions_filter && actions_filter.length > 0) {
-            pipeline.unshift({ $match: { operationType: { $in: actions_filter }}});
+        if (document_projection && Object.keys(document_projection).length > 0) {
+            pipeline.push({$project: {...document_projection, _id: 1, operationType: 1, documentKey: 1, updateDescription: 1}});
         }
+        //console.log(JSON.stringify(pipeline));
         const data_dir = this.config.data_dir;
         let resume_token = resume_token_util.load(data_dir, db_name, db_cname);
         const handle = await db_handle.open(db_name, db_cname);
@@ -125,6 +125,7 @@ class DbWatch {
             const change_event = await cursor.next();
             resume_token = change_event._id;
             const {operationType, fullDocument, documentKey, updateDescription} = change_event;
+            //console.log({operationType, fullDocument, documentKey, updateDescription})
             const { updatedFields = null, removedFields = null  } = updateDescription ? updateDescription : {};
             const event = {db_name, db_cname, _id: documentKey._id, action: operationType, update: updatedFields, remove: removedFields, document: fullDocument};
             this.event_queue.push(event);

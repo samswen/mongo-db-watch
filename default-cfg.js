@@ -5,7 +5,6 @@ module.exports = {
     batch_size: 1024,
     max_events: 16,
     max_promises: 8,
-    actions_filter: null,
     full_document: 'updateLookup',
     max_await_time_ms: 1000,
     data_dir: null,
