@@ -36,7 +36,8 @@ class DbWatch {
         }
         if (full_document === undefined) full_document = this.config.full_document;
         if (!full_document && projection && Object.keys(projection).length > 0) full_document = 'updateLookup';
-        const change_stream = { db_handle, db_name, db_cname, match, projection, full_document, stopped: false, count: 0 };
+        const change_stream = { db_handle, db_name, db_cname, match, projection, full_document, 
+            stopped: false, total_events: 0, start_ms: Date.now() };
         this.change_streams.push(change_stream);
         this.process_stream(change_stream);
         return true;
@@ -125,7 +126,7 @@ class DbWatch {
             const change_event = await cursor.next();
             resume_token = change_event._id;
             change_stream.last_active = new Date();
-            change_stream.count++;
+            change_stream.total_events++;
             const event = this.transform_event(db_name, db_cname, change_event);
             this.events_queue.push(event);
             resume_token_util.save(data_dir, db_name, db_cname, resume_token);
@@ -149,8 +150,9 @@ class DbWatch {
     status() {
         const result = {running: !this.stopped, pending_events: this.events_queue.length};
         const streams = [];
-        for (const {db_name, db_cname, stopped, last_active, count} of this.change_streams) {
-            streams.push({db_cname, db_cname, running: !stopped, last_active, count});
+        for (const {db_name, db_cname, stopped, last_active, total_events, start_ms} of this.change_streams) {
+            const events_per_second = (total_events * 1000 / (Date.now() - start_ms + 1)).toFixed(4)
+            streams.push({db_name, db_cname, running: !stopped, last_active, total_events, events_per_second});
         }
         result.streams = streams;
         return result;
