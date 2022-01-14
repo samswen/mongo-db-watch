@@ -150,7 +150,7 @@ class DbWatch {
         const result = {running: !this.stopped, pending_events: this.events_queue.length};
         const streams = [];
         for (const {db_name, db_cname, stopped, last_active, count} of this.change_streams) {
-            streams.push({db_cname, db_cname, running: stopped, last_active, count});
+            streams.push({db_cname, db_cname, running: !stopped, last_active, count});
         }
         result.streams = streams;
         return result;
