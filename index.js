@@ -124,14 +124,15 @@ class DbWatch {
         while (!change_stream.stopped && await cursor.hasNext()) {
             const change_event = await cursor.next();
             resume_token = change_event._id;
-            const {operationType, fullDocument, documentKey, updateDescription} = change_event;
-            const { updatedFields = null, removedFields = null  } = updateDescription ? updateDescription : {};
-            const event = {db_name, db_cname, _id: documentKey._id, action: operationType, update: updatedFields, 
-                remove: removedFields, document: fullDocument};
+            const event = this.transform_event(db_name, db_cname, change_event);
             this.event_queue.push(event);
             resume_token_util.save(data_dir, db_name, db_cname, resume_token);
         }
         await cursor.close();
+    }
+
+    transform_event(db_name, db_cname, change_event) {
+        return {db_name, db_cname, ...change_event};
     }
 
     async process_events(events) {
