@@ -23,7 +23,7 @@ class DbWatch {
             fs.mkdirSync(this.config.data_dir, {recursive: true});
         }
         this.change_streams = [];
-        this.event_queue = [];
+        this.events_queue = [];
     }
 
     set_watch(db_handle, db_name, db_cname, match, projection, full_document) {
@@ -36,7 +36,7 @@ class DbWatch {
         }
         if (full_document === undefined) full_document = this.config.full_document;
         if (!full_document && projection && Object.keys(projection).length > 0) full_document = 'updateLookup';
-        const change_stream = { db_handle, db_name, db_cname, match, projection, full_document, stopped: false };
+        const change_stream = { db_handle, db_name, db_cname, match, projection, full_document, stopped: false, count: 0 };
         this.change_streams.push(change_stream);
         this.process_stream(change_stream);
         return true;
@@ -56,8 +56,8 @@ class DbWatch {
             }
             const promises = [];
             let events = [];
-            while(this.event_queue.length > 0) {
-                const event = this.event_queue.shift();
+            while(this.events_queue.length > 0) {
+                const event = this.events_queue.shift();
                 if (!event) break;
                 events.push(event);
                 if (events.length === this.config.max_events) {
@@ -124,8 +124,10 @@ class DbWatch {
         while (!change_stream.stopped && await cursor.hasNext()) {
             const change_event = await cursor.next();
             resume_token = change_event._id;
+            change_stream.last_active = new Date();
+            change_stream.count++;
             const event = this.transform_event(db_name, db_cname, change_event);
-            this.event_queue.push(event);
+            this.events_queue.push(event);
             resume_token_util.save(data_dir, db_name, db_cname, resume_token);
         }
         await cursor.close();
@@ -142,7 +144,17 @@ class DbWatch {
     stop() {
         this.stopped = true;
         for (const change_stream of this.change_streams) change_stream.stopped = true;
-    }    
+    }
+    
+    status() {
+        const result = {running: !this.stopped, pending_events: this.events_queue.length};
+        const streams = [];
+        for (const {db_name, db_cname, stopped, last_active, count} of this.change_streams) {
+            streams.push({db_cname, db_cname, running: stopped, last_active, count});
+        }
+        result.streams = streams;
+        return result;
+    }
 }
 
 module.exports = DbWatch;
