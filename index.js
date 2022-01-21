@@ -7,7 +7,7 @@ const resume_token_util = require('./resume-token');
 const default_cfg = require('./default-cfg');
 
 /**
- * watch change stream of mongodb collection
+ * watch change stream of mongodb collections
  */
 class DbWatch {
 
@@ -88,9 +88,9 @@ class DbWatch {
         try {
             await this.run_stream(change_stream);
         } catch(err) {
-            change_stream.stopped = true;
             console.error(err);
         }
+        change_stream.stopped = true;
     }
 
     async run_stream(change_stream) {
@@ -125,7 +125,7 @@ class DbWatch {
         while (!change_stream.stopped && await cursor.hasNext()) {
             const change_event = await cursor.next();
             resume_token = change_event._id;
-            change_stream.last_active = new Date();
+            change_stream.last_activity_time = new Date();
             change_stream.total_events++;
             const event = this.transform_event(db_name, db_cname, change_event);
             this.events_queue.push(event);
@@ -150,9 +150,9 @@ class DbWatch {
     status() {
         const result = {running: !this.stopped, pending_events: this.events_queue.length};
         const streams = [];
-        for (const {db_name, db_cname, stopped, last_active, total_events, start_ms} of this.change_streams) {
+        for (const {db_name, db_cname, stopped, last_activity_time, total_events, start_ms} of this.change_streams) {
             const events_per_second = (total_events * 1000 / (Date.now() - start_ms + 1)).toFixed(4)
-            streams.push({db_name, db_cname, running: !stopped, last_active, total_events, events_per_second});
+            streams.push({db_name, db_cname, running: !stopped, last_activity_time, total_events, events_per_second});
         }
         result.streams = streams;
         return result;
