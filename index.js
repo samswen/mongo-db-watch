@@ -123,7 +123,6 @@ class DbWatch {
             resume_token = null;
             cursor = await handle.watch(pipeline, {resumeAfter: resume_token, ...opts});
         }
-        let count = 0;
         // cursor.hasNext() will wait until there is next
         while (!change_stream.stopped && await cursor.hasNext()) {
             const change_event = await cursor.next();
@@ -133,7 +132,7 @@ class DbWatch {
             const event = this.transform_event(db_name, db_cname, change_event);
             this.events_queue.push(event);
             resume_token_util.save(data_dir, db_name, db_cname, resume_token);
-            if (++count === this.config.max_events) {
+            if (change_stream.total_events % (this.config.max_events * 4) === 0) {
                 await new Promise(resolve => setTimeout(resolve, 50));
                 count = 0;
             }
