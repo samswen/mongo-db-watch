@@ -88,9 +88,9 @@ class DbWatch {
         try {
             await this.run_stream(change_stream);
         } catch(err) {
+            change_stream.stopped = true;
             console.error(err);
         }
-        change_stream.stopped = true;
     }
 
     async run_stream(change_stream) {
