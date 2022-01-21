@@ -80,6 +80,8 @@ class DbWatch {
             const { minima_duration_ms = 250 } = this.config;
             if (duration_ms < minima_duration_ms) {
                 await new Promise(resolve => setTimeout(resolve, minima_duration_ms - duration_ms))
+            } else {
+                await new Promise(resolve => setTimeout(resolve, 50));
             }
         }
     }
