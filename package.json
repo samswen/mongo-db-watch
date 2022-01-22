@@ -17,8 +17,7 @@
     "capture",
     "mongodb",
     "collection",
-    "change",
-    "streams"
+    "change-streams"
   ],
   "author": "Sam Wen",
   "license": "ISC",
