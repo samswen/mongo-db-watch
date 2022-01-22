@@ -134,6 +134,8 @@ class DbWatch {
             resume_token_util.save(data_dir, db_name, db_cname, resume_token);
             if (change_stream.total_events % (this.config.max_events * 4) === 0) {
                 await new Promise(resolve => setTimeout(resolve, 50));
+            } else {
+                await new Promise(resolve => setTimeout(resolve, 0));
             }
         }
         await cursor.close();
