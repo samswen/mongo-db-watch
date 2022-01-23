@@ -132,10 +132,8 @@ class DbWatch {
             const event = this.transform_event(db_name, db_cname, change_event);
             this.events_queue.push(event);
             resume_token_util.save(data_dir, db_name, db_cname, resume_token);
-            if (change_stream.total_events % (this.config.max_events * 4) === 0) {
+            if (change_stream.total_events % this.config.max_events === 0) {
                 await new Promise(resolve => setTimeout(resolve, 50));
-            } else {
-                await new Promise(resolve => setTimeout(resolve, 0));
             }
         }
         await cursor.close();
